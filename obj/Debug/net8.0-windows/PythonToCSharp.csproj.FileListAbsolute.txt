@@ -17,3 +17,4 @@ C:\Users\varte\source\repos\PythonToCSharp\PythonToCSharp\obj\Debug\net8.0-windo
 C:\Users\varte\source\repos\PythonToCSharp\PythonToCSharp\obj\Debug\net8.0-windows\PythonToCSharp.pdb
 C:\Users\varte\source\repos\PythonToCSharp\PythonToCSharp\obj\Debug\net8.0-windows\PythonToCSharp.genruntimeconfig.cache
 C:\Users\varte\source\repos\PythonToCSharp\PythonToCSharp\obj\Debug\net8.0-windows\ref\PythonToCSharp.dll
+C:\Users\varte\source\repos\PythonToCSharp\PythonToCSharp\obj\Debug\net8.0-windows\PythonToCSharp.sourcelink.json

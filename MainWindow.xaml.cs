@@ -46,10 +46,23 @@ namespace WpfApp
 
         private void runButtonClick(object sender, RoutedEventArgs e)
         {
-            foreach (var token in Lexer.Tokenize(fileRead(this.proccessingFilePath)))
+            string outputFilePath = "tokens.out";
+            string fileContent = fileRead(this.proccessingFilePath);
+
+            if (fileContent == null)
             {
-                Console.WriteLine(token);
+                Console.WriteLine("Couldn't read the file for processing.");
+                return;
             }
+
+            using (StreamWriter writer = new StreamWriter(outputFilePath))
+            {
+                foreach (var token in Lexer.Tokenize(fileContent))
+                {
+                    writer.WriteLine(token);
+                }
+            }
+            Console.WriteLine($"Tokens have been successfully written to the file: {outputFilePath}");
         }
     }
 }
