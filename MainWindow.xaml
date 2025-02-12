@@ -1,0 +1,10 @@
+﻿<Window x:Class="WpfApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="File Dialog Example" Height="400" Width="600">
+    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+        <TextBox x:Name="filePathTextBox" Width="300" Margin="10" IsReadOnly="True"/>
+        <Button x:Name="filePathButton" Content="Choose file" Click="filePathButtonClick" Width="100"/>
+        <Button x:Name="runButton" Content="Run" Click="runButtonClick" Width="100"/>
+    </StackPanel>
+</Window>
