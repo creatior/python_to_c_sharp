@@ -57,10 +57,9 @@ namespace WpfApp
 
             using (StreamWriter writer = new StreamWriter(outputFilePath))
             {
-                foreach (var token in Lexer.Tokenize(fileContent))
-                {
-                    writer.WriteLine(token);
-                }
+                Lexer lexer = new();
+                string translated = lexer.ProcessText(fileContent);
+                writer.WriteLine(translated);
             }
             Console.WriteLine($"Tokens have been successfully written to the file: {outputFilePath}");
         }
