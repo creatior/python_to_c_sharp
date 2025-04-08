@@ -55,13 +55,18 @@ namespace WpfApp
                 return;
             }
 
+            string translatedText = String.Empty;
             using (StreamWriter writer = new StreamWriter(outputFilePath))
             {
                 Lexer lexer = new();
                 string translated = lexer.ProcessText(fileContent);
                 writer.WriteLine(translated);
+                translatedText += translated;
             }
-            Console.WriteLine($"Tokens have been successfully written to the file: {outputFilePath}");
+            using (StreamWriter writer = new StreamWriter("rpn.out"))
+            {
+                writer.Write(ReversePolishNotation.ConvertToRPN(translatedText));
+            }
         }
     }
 }

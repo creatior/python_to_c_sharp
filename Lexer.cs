@@ -5,9 +5,10 @@ using System.Text.RegularExpressions;
 
 namespace PythonToCSharp
 {
+    // TODO: add \r to lexer as R10
     public class Lexer
     {
-        private Dictionary<string, string> lexemeTable = new Dictionary<string, string>
+        public static Dictionary<string, string> lexemeTable = new Dictionary<string, string>
         {
             // Операторы
             {"+", "O1"}, {"-", "O2"}, {"*", "O3"}, {"/", "O4"}, {"**", "O5"},
