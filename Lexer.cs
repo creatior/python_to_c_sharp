@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.ComponentModel;
+using System.Reflection.Metadata;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PythonToCSharp
@@ -13,7 +15,7 @@ namespace PythonToCSharp
             {"and", "O12"}, {"or", "O13"}, {"not", "O14"},
 
             // Разделители
-            {" ", "R1"}, {",", "R2"}, {".", "R3"}, {"(", "R4"}, {")", "R5"}, {"'", "R6"}, {"\"", "R7"}, {":", "R8"}, {"[", "R9"}, {"]", "R10"},
+            {" ", "R1"}, {",", "R2"}, {".", "R3"}, {"(", "R4"}, {")", "R5"}, {":", "R6"}, {"[", "R7"}, {"]", "R8"}, {"\t", "R9"},
 
             // Ключевые слова
             {"=", "W1"}, {"if", "W2"}, {"elif", "W3"}, {"else", "W4"}, {"while", "W5"}, {"for", "W6"},
@@ -53,18 +55,34 @@ namespace PythonToCSharp
             for (int i = 0; i < line.Length; i++)
             {
                 char currentChar = line[i];
-
                 switch (state)
                 {
                     case "default":
                         if (char.IsWhiteSpace(currentChar))
                         {
+                            bool tab = true;
+                            for (int j = i + 1; j <= i + 3; j++)
+                            {
+                                if (j >= line.Length || line[j] != ' ')
+                                    tab = false;
+                                break;
+                            }
+                            if (tab)
+                            {
+                                translated.Add("R9");
+                                i += 3;
+                            }
                             continue;
                         }
                         // Обработка комментариев Python (#)
                         else if (currentChar == '#')
                         {
-                            i = line.Length; // Пропускаем оставшуюся часть строки
+                            i = line.Length;
+                        }
+                        else if (currentChar == '=' && i + 1 < line.Length && line[i + 1] == '=')
+                        {
+                            translated.Add("O8");
+                            i += 1;
                         }
                         // Обработка оператора присваивания :=
                         else if (currentChar == ':' && i + 1 < line.Length && line[i + 1] == '=')
@@ -155,7 +173,7 @@ namespace PythonToCSharp
 
                     case "string":
                         buffer.Append(currentChar);
-                        if (currentChar == '\'')
+                        if (currentChar == '\'' || currentChar == '"')
                         {
                             var str = buffer.ToString();
                             if (!strings.ContainsKey(str))
