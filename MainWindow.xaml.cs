@@ -63,9 +63,16 @@ namespace WpfApp
                 writer.WriteLine(translated);
                 translatedText += translated;
             }
+            string rpn = ReversePolishNotation.Convert(fileContent);
             using (StreamWriter writer = new StreamWriter("rpn.out"))
             {
-                writer.Write(ReversePolishNotation.Convert(fileContent));
+                writer.Write(rpn);
+                MessageBox.Show("Текст программы успешно переведён в ОПЗ.\nРезультат сохранён в файл rpn.out", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            using (StreamWriter writer = new StreamWriter("c_sharp.out"))
+            {
+                writer.Write(RPNTranslator.TranslateRPN(rpn));
+                MessageBox.Show("Текст программы успешно переведён из ОПЗ в машинный код.\nРезультат сохранён в файл c_sharp.out", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
     }
