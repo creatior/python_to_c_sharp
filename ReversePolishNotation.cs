@@ -1,197 +1,442 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
-namespace PythonToCSharp
+public class ReversePolishNotation
 {
-    internal class ReversePolishNotation
+    private static readonly Dictionary<string, int> priority = new Dictionary<string, int>
     {
-        public static Dictionary<string, string> lexemeTable = new Dictionary<string, string>
-        { 
-            // Операторы
-            {"O1", "+"}, {"O2", "-"}, {"O3", "*"}, {"O4", "/"}, {"O5", "**"},
-            {"O6", "<"}, {"O7", ">"}, {"O8", "=="}, {"O9", "!="}, {"O10", ">="}, {"O11", "<="},
-            {"O12", "and"}, {"O13", "or"}, {"O14", "not"},
+        {"(", 0}, {"[", 0}, {"АЭМ", 0}, {"Ф", 0}, {"if", 0},
+        {",", 1}, {")", 1}, {"]", 1}, {":", 1}, {"else", 1}, {"DEINDENT", 1},
+        {"=", 2},
+        {"!=", 3}, {">", 3}, {"<", 3}, {"==", 3},
+        {"+", 4}, {"-", 4},
+        {"*", 5}, {"/", 5}, {"%", 5},
+        {"**", 6}
+    };
 
-            // Разделители
-            {"R1", " "}, {"R2", ","}, {"R3", "."}, {"R4", "("}, {"R5", ")"}, {"R6", ":"},
-            {"R7", "["}, {"R8", "]"}, {"R9", "\t"},
+    private static bool IsIdentifier(string token)
+    {
+        return !priority.ContainsKey(token) && token != "def" && token != "\n";
+    }
 
-            // Ключевые слова
-            {"W1", "="}, {"W2", "if"}, {"W3", "elif"}, {"W4", "else"}, {"W5", "while"}, {"W6", "for"},
-            {"W7", "None"}, {"W8", "True"}, {"W9", "False"},
-            {"W10", "def"}, {"W11", "return"}, {"W12", "int"}, {"W13", "str"}, {"W14", "float"},
-            {"W15", "print"}, {"W16", "input"},
+    private static List<string> Tokenize(string code)
+    {
+        List<string> tokens = new List<string>();
+        int i = 0;
+        List<int> indentStack = new List<int> { 0 };
 
-            // Комментарии
-            {"C1", "#"}
-        };
-
-
-        private static Dictionary<string, int> priorityTable = new Dictionary<string, int>
+        while (i < code.Length)
         {
-            { "O5", 6 }, // **
-            { "O3", 5 }, // *
-            { "O4", 5 }, // /
-            { "O1", 4 }, // + (binar)
-            { "O2", 4 }, // - (binar)
-            { "O6", 3 }, // <
-            { "O7", 3 }, // >
-            { "O8", 3 }, // ==
-            { "O9", 3 }, // !=
-            { "O10", 3 }, // >=
-            { "O11", 3 }, // <=
-            { "O14", 2 }, // not
-            { "O12", 1 }, // and
-            { "O13", 0 }, // or
-            { "W1", -1 } // =
-        };
-
-        public static string ConvertToRPN(string inputCode)
-        {
-            var tokens = Tokenize(inputCode);
-            var rpnTokens = ToRPN(tokens);
-            return string.Join(" ", rpnTokens);
-        }
-
-        private static List<string> Tokenize(string code)
-        {
-            List<string> tokens = new List<string>();
-            StringBuilder currentToken = new StringBuilder();
-            int i = 0;
-
-            while (i < code.Length)
+            if (i == 0 || code[i - 1] == '\n')
             {
-                char c = code[i];
+                string remainingCode = code.Substring(i);
+                string trimmed = remainingCode.TrimStart();
+                int currentIndent = remainingCode.Length - trimmed.Length;
 
-                if (char.IsWhiteSpace(c))
+                if (currentIndent > indentStack.Last())
                 {
-                    if (currentToken.Length > 0)
-                    {
-                        tokens.Add(currentToken.ToString());
-                        currentToken.Clear();
-                    }
-                    i++;
+                    indentStack.Add(currentIndent);
+                    i += currentIndent;
                     continue;
-                }
-
-                if (IsSpecialCharacter(c))
-                {
-                    if (currentToken.Length > 0)
-                    {
-                        tokens.Add(currentToken.ToString());
-                        currentToken.Clear();
-                    }
-
-                    // Проверка двухсимвольных операторов
-                    if (i + 1 < code.Length)
-                    {
-                        string potentialOperator = c.ToString() + code[i + 1];
-                        if (lexemeTable.ContainsKey(potentialOperator))
-                        {
-                            tokens.Add(potentialOperator);
-                            i += 2;
-                            continue;
-                        }
-                    }
-
-                    tokens.Add(c.ToString());
-                    i++;
-                }
-                else if (char.IsLetterOrDigit(c) || c == '.')
-                {
-                    currentToken.Append(c);
-                    i++;
                 }
                 else
                 {
-                    i++;
+                    while (currentIndent < indentStack.Last())
+                    {
+                        tokens.Add("DEINDENT");
+                        indentStack.RemoveAt(indentStack.Count - 1);
+                    }
+                    if (currentIndent != indentStack.Last())
+                    {
+                        throw new Exception("Несогласованные отступы");
+                    }
                 }
             }
 
-            if (currentToken.Length > 0)
+            char ch = code[i];
+
+            if (ch == '\n')
             {
-                tokens.Add(currentToken.ToString());
+                tokens.Add("\n");
+                i++;
+                continue;
             }
 
-            return tokens;
-        }
-
-        private static bool IsSpecialCharacter(char c)
-        {
-            return c == '+' || c == '-' || c == '*' || c == '/' || c == '<' ||
-                   c == '>' || c == '=' || c == '!' || c == '(' || c == ')' ||
-                   c == ':' || c == '[' || c == ']' || c == ',' || c == '.' ||
-                   c == '{' || c == '}' || c == '#';
-        }
-
-        private static bool IsOperand(string token)
-        {
-            // Операнд - если токена нет в таблице лексем и это не ключевое слово
-            return !priorityTable.ContainsKey(token);
-        }
-
-        private static List<string> ToRPN(List<string> tokens)
-        {
-            Stack<string> stack = new Stack<string>();
-            List<string> output = new List<string>();
-
-            foreach (string token in tokens)
+            if (char.IsWhiteSpace(ch))
             {
-                if (IsOperand(token))
+                i++;
+                continue;
+            }
+
+            if (i + 1 < code.Length)
+            {
+                string twoChar = code.Substring(i, 2);
+                if (priority.ContainsKey(twoChar))
+                {
+                    tokens.Add(twoChar);
+                    i += 2;
+                    continue;
+                }
+            }
+
+            if (priority.ContainsKey(ch.ToString()))
+            {
+                tokens.Add(ch.ToString());
+                i++;
+                continue;
+            }
+
+            string current = "";
+            while (i < code.Length && !char.IsWhiteSpace(code[i]) && !priority.ContainsKey(code[i].ToString()))
+            {
+                if (i + 1 < code.Length && priority.ContainsKey(code.Substring(i, 2)))
+                {
+                    break;
+                }
+                current += code[i];
+                i++;
+            }
+            if (!string.IsNullOrEmpty(current))
+            {
+                tokens.Add(current);
+            }
+        }
+
+        while (indentStack.Count > 1)
+        {
+            tokens.Add("DEINDENT");
+            indentStack.RemoveAt(indentStack.Count - 1);
+        }
+
+        return tokens;
+    }
+
+    public static string ToRPN(string code)
+    {
+        List<string> tokens = Tokenize(code);
+        Stack<object> stack = new Stack<object>();
+        List<string> output = new List<string>();
+        int i = 0;
+        int labelCounter = 1;
+        Stack<string> ifStack = new Stack<string>();
+        Stack<string> elseLabels = new Stack<string>();
+
+        while (i < tokens.Count)
+        {
+            string token = tokens[i];
+            Console.WriteLine(token);
+
+            if (IsIdentifier(token))
+            {
+                if ((i + 1 < tokens.Count) && (tokens[i + 1] == "("))
+                {
+                    stack.Push(new Tuple<string, string, int>("Ф", token, 1));
+                    output.Add(token);
+                }
+                else if ((i + 1 < tokens.Count) && (tokens[i + 1] == "["))
+                {
+                    stack.Push(new Tuple<string, int>("АЭМ", 2));
+                    stack.Push("[");
+                    output.Add(token);
+                    i++;
+                }
+                else
                 {
                     output.Add(token);
                 }
-                else if (token == "R4") // (
-                {
-                    stack.Push(token);
-                }
-                else if (token == "R5") // )
-                {
-                    // Выталкиваем все операторы до открывающей скобки
-                    while (stack.Count > 0 && stack.Peek() != "R4")
-                    {
-                        output.Add(stack.Pop());
-                    }
-                    stack.Pop(); // Удаляем "(" из стека
-                }
-                else if (lexemeTable.ContainsKey(token))
-                {
-                    string lexemeCode = lexemeTable[token];
-
-                    if (priorityTable.ContainsKey(lexemeCode))
-                    {
-                        // Выталкиваем операторы с более высоким или равным приоритетом
-                        while (stack.Count > 0 && stack.Peek() != "R4" &&
-                               lexemeTable.ContainsKey(stack.Peek()) &&
-                               priorityTable.ContainsKey(lexemeTable[stack.Peek()]) &&
-                               priorityTable[lexemeTable[stack.Peek()]] >= priorityTable[lexemeCode])
-                        {
-                            output.Add(stack.Pop());
-                        }
-                    }
-                    stack.Push(token);
-                }
             }
-
-            // Выталкиваем оставшиеся операторы
-            while (stack.Count > 0)
+            else if ((token == "=") && (i + 1 < tokens.Count) && (tokens[i + 1] == "["))
             {
-                if (stack.Peek() != "R4")
+                i += 2;
+                List<string> initValues = new List<string>();
+                output.Add("[");
+                while ((i < tokens.Count) && (tokens[i] != "]"))
                 {
-                    output.Add(stack.Pop());
+                    if (tokens[i] != ",")
+                    {
+                        initValues.Add(tokens[i]);
+                    }
+                    else
+                    {
+                        output.Add(ToRPN(string.Join("", initValues)));
+                        output.Add(",");
+                        initValues.Clear();
+                    }
+                    i++;
                 }
-                else
+                output.Add(ToRPN(string.Join("", initValues)) + "]");
+                initValues.Clear();
+                output.Add("=");
+            }
+            else if ((token == "(") && stack.Count > 0 && stack.Peek() is Tuple<string, string, int> tuple && tuple.Item1 == "Ф")
+            {
+                List<string> initValues = new List<string>();
+                var fTuple = (Tuple<string, string, int>)stack.Peek();
+                var newFTuple = new Tuple<string, string, int>("Ф", fTuple.Item2, fTuple.Item3);
+
+                while ((i < tokens.Count) && (tokens[i] != ")"))
                 {
-                    stack.Pop(); // Удаляем оставшиеся "("
+                    i++;
+                    if (tokens[i] != ",")
+                    {
+                        initValues.Add(tokens[i]);
+                    }
+                    else
+                    {
+                        output.Add(ToRPN(string.Join("", initValues)));
+                        var currFTuple = (Tuple<string, string, int>)stack.Pop();
+                        newFTuple = new Tuple<string, string, int>("Ф", currFTuple.Item2, currFTuple.Item3 + 1);
+                        stack.Push(newFTuple);
+                        initValues.Clear();
+                    }
+                }
+                output.Add(ToRPN(string.Join("", initValues)));
+                output.Add($"{newFTuple.Item3 + 1}Ф");
+                stack.Pop();
+            }
+            else if ((token == ",") && stack.Count > 0 && (stack.Peek() as string == "("))
+            {
+                while (stack.Count > 0 && (stack.Peek() as string != "("))
+                {
+                    object currToken = stack.Pop();
+                    if (currToken is Tuple<string, string, int> funcToken)
+                    {
+                        output.Add($"{funcToken.Item2} {funcToken.Item3}Ф");
+                    }
+                    else if (currToken is Tuple<string, int> arrToken)
+                    {
+                        output.Add($"{arrToken.Item2}АЭМ");
+                    }
+                    else
+                    {
+                        output.Add(currToken.ToString());
+                    }
+                }
+
+                foreach (var item in stack.ToArray())
+                {
+                    if (item is Tuple<string, string, int> ft && ft.Item1 == "Ф")
+                    {
+                        stack.Pop();
+                        stack.Push(new Tuple<string, string, int>("Ф", ft.Item2, ft.Item3 + 1));
+                        break;
+                    }
                 }
             }
+            else if ((token == "]") && stack.Count > 0 && (stack.Peek() as string == "[") && (i + 1 < tokens.Count) && (tokens[i + 1] == "["))
+            {
+                i += 2;
+                for (int j = 0; j < stack.Count; j++)
+                {
+                    if (stack.ElementAt(j) is Tuple<string, int> arrToken && arrToken.Item1 == "АЭМ")
+                    {
+                        stack.Pop();
+                        stack.Push(new Tuple<string, int>("АЭМ", arrToken.Item2 + 1));
+                        break;
+                    }
+                }
+            }
+            else if (token == ")")
+            {
+                while (stack.Count > 0 && (stack.Peek() as string != "("))
+                {
+                    object currToken = stack.Pop();
+                    if (currToken is Tuple<string, string, int> funcToken)
+                    {
+                        output.Add($"{funcToken.Item2} {funcToken.Item3}Ф");
+                    }
+                    else if (currToken is Tuple<string, int> arrToken)
+                    {
+                        output.Add($"{arrToken.Item2}АЭМ");
+                    }
+                    else if (currToken is Tuple<string, string> ifToken && ifToken.Item1 == "if")
+                    {
+                        output.Add($"{ifToken.Item2} УПЛ");
+                    }
+                    else
+                    {
+                        output.Add(currToken.ToString());
+                    }
+                }
+                if (stack.Count > 0)
+                {
+                    stack.Pop();
+                    if (stack.Count > 0 && stack.Peek() is Tuple<string, string, int> fTuple && fTuple.Item1 == "Ф")
+                    {
+                        var popped = (Tuple<string, string, int>)stack.Pop();
+                        output.Add($"{popped.Item2} {popped.Item3}Ф");
+                    }
+                }
+            }
+            else if (token == "]")
+            {
+                while (stack.Count > 0 && (stack.Peek() as string != "["))
+                {
+                    output.Add(stack.Pop().ToString());
+                }
+                if (stack.Count > 0)
+                {
+                    stack.Pop();
+                    if (stack.Count > 0 && stack.Peek() is Tuple<string, int> arrToken && arrToken.Item1 == "АЭМ")
+                    {
+                        int count = ((Tuple<string, int>)stack.Pop()).Item2;
+                        output.Add($"{count}АЭМ");
+                    }
+                }
+            }
+            else if (token == "if")
+            {
+                string currentLabel = $"М{labelCounter}";
+                labelCounter++;
+                ifStack.Push(currentLabel);
+                stack.Push(new Tuple<string, string>("if", currentLabel));
+            }
+            else if (token == "else" && (i + 1 < tokens.Count) && (tokens[i + 1] == ":"))
+            {
+                if (ifStack.Count > 0)
+                {
+                    string elseLabel = $"М{labelCounter}";
+                    output.Add(elseLabel);
+                    labelCounter++;
+                    output.Add($"БП {ifStack.Peek()}:");
+                    elseLabels.Push(elseLabel);
+                    i++;
+                }
+            }
+            else if ((i + 1 < tokens.Count) && (token == ":") && (tokens[i + 1] == "\n") && (ifStack.Count == 0))
+            {
+                output.Add("НП");
+                stack.Push(":");
+                i++;
+            }
+            else if (token == ":")
+            {
+                if (ifStack.Count > 0)
+                {
+                    while (!(stack.Peek() is Tuple<string, string> ifToken && ifToken.Item1 == "if"))
+                    {
+                        output.Add(stack.Pop().ToString());
+                    }
+                    output.Add($"{ifStack.Peek()} УПЛ");
+                    stack.Pop();
+                }
+            }
+            else if (token == "DEINDENT")
+            {
+                while (stack.Count > 0 && (stack.Peek() as string != ":"))
+                {
+                    object top = stack.Pop();
+                    if (top is string)
+                    {
+                        output.Add(top.ToString());
+                    }
+                }
+                if (stack.Count > 0)
+                {
+                    stack.Pop();
+                }
 
-            return output;
+                if ((i + 1 < tokens.Count) && (tokens[i + 1] != "else"))
+                {
+                    if (ifStack.Count > 0 && elseLabels.Count == 0)
+                    {
+                        output.Add($"{ifStack.Pop()}:");
+                    }
+                    else
+                    {
+                        output.Add("КП");
+                    }
+                }
+
+                if (elseLabels.Count > 0)
+                {
+                    output.Add($"{elseLabels.Pop()}:");
+                }
+            }
+            else if (token == "\n")
+            {
+                if ((i + 1 < tokens.Count) && (tokens[i + 1] == "DEINDENT"))
+                {
+                    i++;
+                    continue;
+                }
+                while (stack.Count > 0)
+                {
+                    object currToken = stack.Pop();
+                    if (currToken is Tuple<string, string, int> funcToken)
+                    {
+                        output.Add($"{funcToken.Item2} {funcToken.Item3}Ф");
+                    }
+                    else if (currToken is Tuple<string, int> arrToken)
+                    {
+                        output.Add($"{arrToken.Item2}АЭМ");
+                    }
+                    else
+                    {
+                        output.Add(currToken.ToString());
+                    }
+                }
+                i++;
+                continue;
+            }
+            else if (priority.ContainsKey(token))
+            {
+                while (stack.Count > 0 &&
+                       !(stack.Peek() is Tuple<string, string, int>) &&
+                       !(stack.Peek() is Tuple<string, int>) &&
+                       !(stack.Peek() is Tuple<string, string>) &&
+                       stack.Peek() as string != "(" &&
+                       stack.Peek() as string != "[" &&
+                       stack.Peek() as string != ":" &&
+                       priority[stack.Peek() as string] >= priority[token])
+                {
+                    output.Add(stack.Pop().ToString());
+                }
+                stack.Push(token);
+            }
+
+            i++;
         }
+
+        while (stack.Count > 0)
+        {
+            object currToken = stack.Pop();
+            if (currToken is Tuple<string, string, int> funcToken)
+            {
+                output.Add($"{funcToken.Item2} {funcToken.Item3}Ф");
+            }
+            else if (currToken is Tuple<string, int> arrToken)
+            {
+                output.Add($"{arrToken.Item2}АЭМ");
+            }
+            else
+            {
+                output.Add(currToken.ToString());
+            }
+        }
+
+        return string.Join(" ", output);
+    }
+
+    public static string Convert(string code)
+    {
+        string[] lines = code.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+
+        List<string> filteredLines = new List<string>();
+
+        foreach (string line in lines)
+        {
+            string trimmedLine = line.Trim();
+            if (!trimmedLine.StartsWith("#") && !string.IsNullOrWhiteSpace(trimmedLine))
+            {
+                filteredLines.Add(line);
+            }
+        }
+        string filteredCode = string.Join("\n", filteredLines);
+
+        string rpn = ToRPN(filteredCode);
+
+        return rpn;
     }
 }

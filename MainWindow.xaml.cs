@@ -65,7 +65,7 @@ namespace WpfApp
             }
             using (StreamWriter writer = new StreamWriter("rpn.out"))
             {
-                writer.Write(ReversePolishNotation.ConvertToRPN(translatedText));
+                writer.Write(ReversePolishNotation.Convert(fileContent));
             }
         }
     }
