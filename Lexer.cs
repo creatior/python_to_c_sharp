@@ -36,6 +36,31 @@ namespace PythonToCSharp
         private int numCount = 0;
         private int strCount = 0;
 
+        public string AddDeindent(string inputText)
+        {
+            if (string.IsNullOrEmpty(inputText))
+                return inputText;
+
+            var lines = inputText.Split(new[] { '\n' }, StringSplitOptions.None).ToList();
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string currentLine = lines[i].Trim();
+
+                if (currentLine.StartsWith("R9"))
+                {
+                    bool isLastLine = (i == lines.Count - 1);
+                    bool nextLineDoesNotStartWithR9 = !isLastLine && !lines[i + 1].Trim().StartsWith("R9");
+
+                    if (isLastLine || nextLineDoesNotStartWithR9)
+                    {
+                        lines[i] = lines[i].TrimEnd() + " R11";
+                    }
+                }
+            }
+
+            return string.Join("\n", lines);
+        }
         public string ProcessText(string text)
         {
             var result = new List<string>();
@@ -44,7 +69,7 @@ namespace PythonToCSharp
                 var translatedLine = ProcessLine(line);
                 result.Add(translatedLine);
             }
-            return string.Join("\n", result);
+            return AddDeindent(string.Join("\n", result));
         }
 
         private string ProcessLine(string line)

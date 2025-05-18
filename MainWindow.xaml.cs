@@ -27,7 +27,7 @@ namespace WpfApp
             }
         }
 
-        public string fileRead(string filePath)
+        public string? fileRead(string filePath)
         {
             try
             {
@@ -47,7 +47,7 @@ namespace WpfApp
         private void runButtonClick(object sender, RoutedEventArgs e)
         {
             string outputFilePath = "tokens.out";
-            string fileContent = fileRead(this.proccessingFilePath);
+            string? fileContent = fileRead(this.proccessingFilePath);
 
             if (fileContent == null)
             {
@@ -63,16 +63,26 @@ namespace WpfApp
                 writer.WriteLine(translated);
                 translatedText += translated;
             }
-            string rpn = ReversePolishNotation.Convert(fileContent);
-            using (StreamWriter writer = new StreamWriter("rpn.out"))
+
+            var syntaxAnalyzer = new SyntaxAnalyzer();
+            var result = syntaxAnalyzer.Analyze(translatedText);
+            string resultText = result.Item1;
+            bool syntaxIsCorrect = result.Item2;
+            MessageBox.Show(resultText, syntaxIsCorrect ? "Успех" : "Неудача", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            if (syntaxIsCorrect)
             {
-                writer.Write(rpn);
-                MessageBox.Show("Текст программы успешно переведён в ОПЗ.\nРезультат сохранён в файл rpn.out", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            using (StreamWriter writer = new StreamWriter("c_sharp.out"))
-            {
-                writer.Write(RPNTranslator.TranslateRPN(rpn));
-                MessageBox.Show("Текст программы успешно переведён из ОПЗ в машинный код.\nРезультат сохранён в файл c_sharp.out", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                string rpn = ReversePolishNotation.Convert(fileContent);
+                using (StreamWriter writer = new StreamWriter("rpn.out"))
+                {
+                    writer.Write(rpn);
+                    MessageBox.Show("Текст программы успешно переведён в ОПЗ.\nРезультат сохранён в файл rpn.out", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                using (StreamWriter writer = new StreamWriter("c_sharp.out"))
+                {
+                    writer.Write(RPNTranslator.TranslateRPN(rpn));
+                    MessageBox.Show("Текст программы успешно переведён из ОПЗ в машинный код.\nРезультат сохранён в файл c_sharp.out", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
             }
         }
     }

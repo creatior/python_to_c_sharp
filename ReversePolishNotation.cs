@@ -7,7 +7,7 @@ public class ReversePolishNotation
     private static readonly Dictionary<string, int> priority = new Dictionary<string, int>
     {
         {"(", 0}, {"[", 0}, {"АЭМ", 0}, {"Ф", 0}, {"if", 0},
-        {",", 1}, {")", 1}, {"]", 1}, {":", 1}, {"else", 1}, {"DEINDENT", 1},
+        {",", 1}, {")", 1}, {"]", 1}, {":", 1}, {"else", 1}, {"DEINDENT", 1}, { "return", 1 },
         {"=", 2},
         {"!=", 3}, {">", 3}, {"<", 3}, {"==", 3},
         {"+", 4}, {"-", 4},
@@ -121,6 +121,7 @@ public class ReversePolishNotation
         int labelCounter = 1;
         Stack<string> ifStack = new Stack<string>();
         Stack<string> elseLabels = new Stack<string>();
+        bool inMethod = false;
 
         while (i < tokens.Count)
         {
@@ -165,7 +166,7 @@ public class ReversePolishNotation
                     }
                     i++;
                 }
-                output.Add(ToRPN(string.Join("", initValues)) + "]");
+                output.Add(ToRPN(string.Join("", initValues)) + " ]");
                 initValues.Clear();
                 output.Add("=");
             }
@@ -307,7 +308,7 @@ public class ReversePolishNotation
             else if ((i + 1 < tokens.Count) && (token == ":") && (tokens[i + 1] == "\n") && (ifStack.Count == 0))
             {
                 output.Add("НП");
-                stack.Push(":");
+                inMethod = true;
                 i++;
             }
             else if (token == ":")
@@ -332,6 +333,12 @@ public class ReversePolishNotation
                         output.Add(top.ToString());
                     }
                 }
+                if (inMethod && i + 1 >= tokens.Count)
+                {
+                    output.Add("КП");
+                    stack.Pop();
+                    inMethod = false;
+                }
                 if (stack.Count > 0)
                 {
                     stack.Pop();
@@ -346,6 +353,7 @@ public class ReversePolishNotation
                     else
                     {
                         output.Add("КП");
+                        inMethod = false;
                     }
                 }
 
@@ -415,7 +423,6 @@ public class ReversePolishNotation
                 output.Add(currToken.ToString());
             }
         }
-
         return string.Join(" ", output);
     }
 

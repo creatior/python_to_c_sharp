@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PythonToCSharp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c5224ad5dc9da77557b8c0d1006d8edafd5e5122")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+18cb164e5ffa5aac07b1330c05b88f1a20b70164")]
 [assembly: System.Reflection.AssemblyProductAttribute("PythonToCSharp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PythonToCSharp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
